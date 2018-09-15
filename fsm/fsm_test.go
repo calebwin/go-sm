@@ -85,6 +85,14 @@ func TestHistory(t *testing.T) {
   if len(myFSM.history) != 1 {
     t.Fail()
   }
+
+  myFSM = Execute(myFSM, "push")
+  myFSM = Execute(myFSM, "push")
+  myFSM = HistoryBack(myFSM, 2)
+
+  if myFSM.state != "un-locked" {
+    t.Fail()
+  }
 }
 
 func TestVisualization(t *testing.T) {

@@ -1,0 +1,9 @@
+digraph {
+	locked;
+	un-locked;
+
+	"locked" -> "un-locked" [ label=" coin " ];
+	"un-locked" -> "un-locked" [ label=" coin " ];
+	"locked" -> "locked" [ label=" push " ];
+	"un-locked" -> "locked" [ label=" push " ];
+}
