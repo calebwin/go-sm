@@ -32,38 +32,14 @@ func TestLifecycle(t *testing.T) {
     Transition{"coin", []State{State{"locked"}, State{"un-locked"},}, State{"un-locked"}},
     Transition{"push", []State{State{"locked"}, State{"un-locked"},}, State{"locked"}},
   }
-  // myTransitions := map[string][]Transition{
-  //   // define a transition called "coin" with 2 state-to-state transitions
-  //   "coin" : []Transition {
-  //     Transition {
-  //       "locked",
-  //       "un-locked",
-  //     },
-  //     Transition {
-  //       "un-locked",
-  //       "un-locked",
-  //     },
-  //   },
-  //   // define a transition called "push" with 2 state-to-state transitions
-  //   "push" : []Transition {
-  //     Transition {
-  //       "un-locked",
-  //       "locked",
-  //     },
-  //     Transition {
-  //       "locked",
-  //       "locked",
-  //     },
-  //   },
-  // }
 
   // add transition rules to FSM
   myFSM = setTransitions(myFSM, myTransitions)
 
   var money int = 0
 
-  // add lifecycle events to FSM
-  myFSM = setEvents(myFSM,
+  // add lifecycle Callbacks to FSM
+  myFSM = setCallbacks(myFSM,
     func(transition string) {}, // onBeforeTransition
     func(transition string) { // onAfterTransition
       if transition == "coin" {
@@ -86,4 +62,22 @@ func TestLifecycle(t *testing.T) {
     t.Fail()
   }
 
+}
+
+func TestHistory(t *testing.T) {
+  myFSM := generate("locked", true)
+
+  // define all possible transitions
+  myTransitions := []Transition{
+    Transition{"coin", []State{State{"locked"}, State{"un-locked"},}, State{"un-locked"}},
+    Transition{"push", []State{State{"locked"}, State{"un-locked"},}, State{"locked"}},
+  }
+  myFSM = setTransitions(myFSM, myTransitions)
+
+  myFSM = transition(myFSM, "coin")
+  myFSM = transition(myFSM, "coin")
+
+  if len(myFSM.history) != 3 {
+    t.Fail()
+  }
 }

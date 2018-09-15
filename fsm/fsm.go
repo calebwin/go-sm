@@ -4,10 +4,10 @@ import (
   //"fmt"
 )
 
-type onBeforeTransitionEvent func(transition string)
-type onAfterTransitionEvent func(transition string)
-type onEnterStateEvent func(state string)
-type onLeaveStateEvent func(state string)
+type onBeforeTransitionCallback func(transition string)
+type onAfterTransitionCallback func(transition string)
+type onEnterStateCallback func(state string)
+type onLeaveStateCallback func(state string)
 
 // type Transition struct {
 //   from string
@@ -27,10 +27,11 @@ type Transition struct {
 type FSM struct {
   state string
   transitions map[string]Transition
-  onBeforeTransition onBeforeTransitionEvent
-  onAfterTransition onAfterTransitionEvent
-  onEnterState onEnterStateEvent
-  onLeaveState onLeaveStateEvent
+  onBeforeTransition onBeforeTransitionCallback
+  onAfterTransition onAfterTransitionCallback
+  onEnterState onEnterStateCallback
+  onLeaveState onLeaveStateCallback
+  history []string
 }
 
 func (fsm *FSM) is(state string) bool {
@@ -105,7 +106,19 @@ func (fsm *FSM) allStates() []string {
   return allStates
 }
 
-func generate(initialState string) FSM {
+func generate(initialState string, flags ...bool) FSM {
+  if len(flags) >= 1 && flags[0] == true { // enable history
+    return FSM {
+      initialState,
+      make(map[string]Transition),
+      func (transition string) {},
+      func (transition string) {},
+      func (state string) {},
+      func (state string) {},
+      []string {initialState,},
+    }
+  }
+
   return FSM {
     initialState,
     make(map[string]Transition),
@@ -113,6 +126,7 @@ func generate(initialState string) FSM {
     func (transition string) {},
     func (state string) {},
     func (state string) {},
+    []string {},
   }
 }
 
@@ -130,10 +144,11 @@ func setTransitions(fsm FSM, newTransitions []Transition) FSM {
     fsm.onAfterTransition,
     fsm.onEnterState,
     fsm.onLeaveState,
+    fsm.history,
   }
 }
 
-func setEvents(fsm FSM, newOnBeforeTransition onBeforeTransitionEvent, newOnAfterTransition onAfterTransitionEvent, newOnEnterState onEnterStateEvent, newOnLeaveState onLeaveStateEvent) FSM {
+func setCallbacks(fsm FSM, newOnBeforeTransition onBeforeTransitionCallback, newOnAfterTransition onAfterTransitionCallback, newOnEnterState onEnterStateCallback, newOnLeaveState onLeaveStateCallback) FSM {
     return FSM {
       fsm.state,
       fsm.transitions,
@@ -141,6 +156,7 @@ func setEvents(fsm FSM, newOnBeforeTransition onBeforeTransitionEvent, newOnAfte
       newOnAfterTransition,
       newOnEnterState,
       newOnLeaveState,
+      fsm.history,
     }
 }
 
@@ -153,6 +169,11 @@ func transition(fsm FSM, transition string) FSM {
     fsm.onAfterTransition(transition)
     fsm.onEnterState(fsm.transitions[validTransitionNames[0]].to.name)
 
+    newHistory := fsm.history
+    if len(fsm.history) > 0 {
+      newHistory = append(newHistory, fsm.transitions[validTransitionNames[0]].to.name)
+    }
+
     return FSM {
       fsm.transitions[validTransitionNames[0]].to.name,
       fsm.transitions,
@@ -160,6 +181,7 @@ func transition(fsm FSM, transition string) FSM {
       fsm.onAfterTransition,
       fsm.onEnterState,
       fsm.onLeaveState,
+      newHistory,
     }
   }
 
