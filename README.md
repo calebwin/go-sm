@@ -4,6 +4,8 @@ go-sm is a library for generating persistent finite-state machines in the Go pro
 ## How to use it
 A basic finite-state machine with two states and two transitions can be created as follows with a simple 3-step process.
 ```golang
+import "github.com/calebwin/go-sm/fsm"
+
 myFSM := fsm.Generate("locked") // 1) generate a new finite-state machine with an inital state of "locked"
 
 myTransitions := []fsm.Transition{
