@@ -1,24 +1,40 @@
-# go-sm
-A finite state machine library for the Go programming language
+## What it is
+go-sm is a library for generating persistent finite-state machines in the Go programming language. go-sm currently supports lifecycle callbacks, state history storage, generated .dot graph visualizations.
 
-# Usage
-```
-// generate a new FSM with an initial state of "locked"
-myFSM := generate("locked")
+## How to use it
+A basic finite-state machine with two states and two transitions can be created as follows with a simple 3-step process.
+```golang
+// 1) generate a new finite-state machine with an inital state of "locked"
+myFSM := fsm.Generate("locked")
 
-// define all possible transitions
-myTransitions := []Transition{
-  Transition{"coin", []State{State{"locked"}, State{"un-locked"},}, State{"un-locked"}},
-  Transition{"push", []State{State{"locked"}, State{"un-locked"},}, State{"locked"}},
+// 2) define possible transitions within the finite-state machine
+myTransitions := []fsm.Transition{
+  fsm.Transition{"coin", []fsm.State{fsm.State{"locked"}, fsm.State{"un-locked"},}, fsm.State{"un-locked"}},
+  fsm.Transition{"push", []fsm.State{fsm.State{"locked"}, fsm.State{"un-locked"},}, fsm.State{"locked"}},
 }
+myFSM = fsm.SetTransitions(myFSM, myTransitions) 
 
-// add transition rules to FSM
-myFSM = setTransitions(myFSM, myTransitions)
+// 3) execute the transition named "coin" resulting a new state of "un-locked"
+myFSM = fsm.Execute(myFSM, "coin") 
+```
 
-var money int = 0
+Callback functions can be defined for the following 4 lifecycle events.
+- `onBeforeTransition`
+- `onAfterTransition`
+- `onEnterState`
+- `onLeaveState`
+They can be defined with go-sm as follows.
+```golang
+myFSM := fsm.Generate("locked")
 
-// add lifecycle events to FSM
-myFSM = setEvents(myFSM,
+myTransitions := []fsm.Transition{
+  fsm.Transition{"coin", []fsm.State{fsm.State{"locked"}, fsm.State{"un-locked"},}, fsm.State{"un-locked"}},
+  fsm.Transition{"push", []fsm.State{fsm.State{"locked"}, fsm.State{"un-locked"},}, fsm.State{"locked"}},
+}
+myFSM = fsm.SetTransitions(myFSM, myTransitions) 
+
+coins := 0
+myFSM = fsm.SetCallbacks(myFSM,
   func(transition string) {}, // onBeforeTransition
   func(transition string) { // onAfterTransition
     if transition == "coin" {
@@ -29,10 +45,79 @@ myFSM = setEvents(myFSM,
   func(state string) {}, // onLeaveState
 )
 
-// execute the "coin" transition twice
-myFSM = transition(myFSM, "coin")
-myFSM = transition(myFSM, "coin")
+myFSM = fsm.Execute(myFSM, "coin") 
+```
 
-// money == 2 after "coin" transition executed twice
+State history can be maintained with go-sm as follows.
+```golang
+myFSM := fsm.Generate("locked", true) // first flag set to true to indicate history should be maintained
 
+myTransitions := []fsm.Transition{
+  fsm.Transition{"coin", []fsm.State{fsm.State{"locked"}, fsm.State{"un-locked"},}, fsm.State{"un-locked"}},
+  fsm.Transition{"push", []fsm.State{fsm.State{"locked"}, fsm.State{"un-locked"},}, fsm.State{"locked"}},
+}
+myFSM = fsm.SetTransitions(myFSM, myTransitions) 
+
+myFSM = fsm.Execute(myFSM, "coin") 
+
+myFSM.history // {"locked", "un-locked",}
+```
+State history can be used to undo/redo state transitions.
+```golang
+myFSM := fsm.Generate("locked", true) // first flag set to true to indicate history should be maintained
+
+myTransitions := []fsm.Transition{
+  fsm.Transition{"coin", []fsm.State{fsm.State{"locked"}, fsm.State{"un-locked"},}, fsm.State{"un-locked"}},
+  fsm.Transition{"push", []fsm.State{fsm.State{"locked"}, fsm.State{"un-locked"},}, fsm.State{"locked"}},
+}
+myFSM = fsm.SetTransitions(myFSM, myTransitions) 
+
+myFSM = fsm.Execute(myFSM, "coin")
+myFSM = fsm.Execute(myFSM, "coin")
+
+myFSM = fsm.HistoryBack(myFSM, 2) // undo 2 state transitions
+
+myFSM.state // "locked"
+```
+State history can also be cleared.
+```golang
+myFSM := fsm.Generate("locked", true) // first flag set to true to indicate history should be maintained
+
+myTransitions := []fsm.Transition{
+  fsm.Transition{"coin", []fsm.State{fsm.State{"locked"}, fsm.State{"un-locked"},}, fsm.State{"un-locked"}},
+  fsm.Transition{"push", []fsm.State{fsm.State{"locked"}, fsm.State{"un-locked"},}, fsm.State{"locked"}},
+}
+myFSM = fsm.SetTransitions(myFSM, myTransitions) 
+
+myFSM = fsm.Execute(myFSM, "coin")
+myFSM = fsm.Execute(myFSM, "coin")
+
+myFSM = fsm.ClearHistory(myFSM)
+
+myFSM.history // {"un-locked",}
+```
+
+Visualizations of finite-state machines can be generated as .dot files as follows.
+```golang
+myFSM := fsm.Generate("locked", true) // first flag set to true to indicate history should be maintained
+
+myTransitions := []fsm.Transition{
+  fsm.Transition{"coin", []fsm.State{fsm.State{"locked"}, fsm.State{"un-locked"},}, fsm.State{"un-locked"}},
+  fsm.Transition{"push", []fsm.State{fsm.State{"locked"}, fsm.State{"un-locked"},}, fsm.State{"locked"}},
+}
+myFSM = fsm.SetTransitions(myFSM, myTransitions) 
+
+fsm.GenerateVisualization(myFSM, "myVisualization.dot")
+```
+The above call to `GenerateVisualization` will result in the following file created.
+```
+digraph {
+	locked;
+	un-locked;
+
+	"locked" -> "un-locked" [ label=" coin " ];
+	"un-locked" -> "un-locked" [ label=" coin " ];
+	"locked" -> "locked" [ label=" push " ];
+	"un-locked" -> "locked" [ label=" push " ];
+}
 ```
