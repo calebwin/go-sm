@@ -9,15 +9,26 @@ myFSM := fsm.Generate("locked")
 
 // 2) define possible transitions within the finite-state machine
 myTransitions := []fsm.Transition{
-  fsm.Transition{"coin", []fsm.State{fsm.State{"locked"}, fsm.State{"un-locked"},}, fsm.State{"un-locked"}},
-  fsm.Transition{"push", []fsm.State{fsm.State{"locked"}, fsm.State{"un-locked"},}, fsm.State{"locked"}},
+  fsm.Transition{
+  	"coin", 
+	[]fsm.State{fsm.State{"locked"}, fsm.State{"un-locked"},}, 
+	fsm.State{"un-locked"}
+  },
+  fsm.Transition{
+  	"push", 
+	[]fsm.State{fsm.State{"locked"}, fsm.State{"un-locked"},}, 
+	fsm.State{"locked"}
+  },
 }
 myFSM = fsm.SetTransitions(myFSM, myTransitions) 
 
-// 3) execute the transition named "coin" resulting a new state of "un-locked"
+// 3) execute the transition named "coin"
 myFSM = fsm.Execute(myFSM, "coin") 
+
+myFSM.state // "un-locked"
 ```
 
+### Callback Functions
 Callback functions can be defined for the following 4 lifecycle events.
 - `onBeforeTransition`
 - `onAfterTransition`
@@ -48,6 +59,7 @@ myFSM = fsm.SetCallbacks(myFSM,
 myFSM = fsm.Execute(myFSM, "coin") 
 ```
 
+### State History
 State history can be maintained with go-sm as follows.
 ```golang
 myFSM := fsm.Generate("locked", true) // first flag set to true to indicate history should be maintained
@@ -97,6 +109,7 @@ myFSM = fsm.ClearHistory(myFSM)
 myFSM.history // {"un-locked",}
 ```
 
+### Visualizations
 Visualizations of finite-state machines can be generated as .dot files as follows.
 ```golang
 myFSM := fsm.Generate("locked", true) // first flag set to true to indicate history should be maintained
