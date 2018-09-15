@@ -7,29 +7,10 @@ import (
 func TestBasic(t *testing.T) {
   myFSM := generate("locked")
 
-  myTransitions := map[string][]Transition{
-    // define a transition called "coin" with 2 state-to-state transitions
-    "coin" : []Transition {
-      Transition {
-        "locked",
-        "un-locked",
-      },
-      Transition {
-        "un-locked",
-        "un-locked",
-      },
-    },
-    // define a transition called "push" with 2 state-to-state transitions
-    "push" : []Transition {
-      Transition {
-        "un-locked",
-        "locked",
-      },
-      Transition {
-        "locked",
-        "locked",
-      },
-    },
+  // define all possible transitions
+  myTransitions := []Transition{
+    Transition{"coin", []State{State{"locked"}, State{"un-locked"},}, State{"un-locked"}},
+    Transition{"push", []State{State{"locked"}, State{"un-locked"},}, State{"locked"}},
   }
   myFSM = setTransitions(myFSM, myTransitions)
 
@@ -47,30 +28,34 @@ func TestLifecycle(t *testing.T) {
   myFSM := generate("locked")
 
   // define all possible transitions
-  myTransitions := map[string][]Transition{
-    // define a transition called "coin" with 2 state-to-state transitions
-    "coin" : []Transition {
-      Transition {
-        "locked",
-        "un-locked",
-      },
-      Transition {
-        "un-locked",
-        "un-locked",
-      },
-    },
-    // define a transition called "push" with 2 state-to-state transitions
-    "push" : []Transition {
-      Transition {
-        "un-locked",
-        "locked",
-      },
-      Transition {
-        "locked",
-        "locked",
-      },
-    },
+  myTransitions := []Transition{
+    Transition{"coin", []State{State{"locked"}, State{"un-locked"},}, State{"un-locked"}},
+    Transition{"push", []State{State{"locked"}, State{"un-locked"},}, State{"locked"}},
   }
+  // myTransitions := map[string][]Transition{
+  //   // define a transition called "coin" with 2 state-to-state transitions
+  //   "coin" : []Transition {
+  //     Transition {
+  //       "locked",
+  //       "un-locked",
+  //     },
+  //     Transition {
+  //       "un-locked",
+  //       "un-locked",
+  //     },
+  //   },
+  //   // define a transition called "push" with 2 state-to-state transitions
+  //   "push" : []Transition {
+  //     Transition {
+  //       "un-locked",
+  //       "locked",
+  //     },
+  //     Transition {
+  //       "locked",
+  //       "locked",
+  //     },
+  //   },
+  // }
 
   // add transition rules to FSM
   myFSM = setTransitions(myFSM, myTransitions)
