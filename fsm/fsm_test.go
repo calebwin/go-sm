@@ -5,27 +5,26 @@ import (
 )
 
 func TestBasic(t *testing.T) {
-  myFSM := generate("locked")
+  myFSM := Generate("locked")
 
   // define all possible transitions
   myTransitions := []Transition{
     Transition{"coin", []State{State{"locked"}, State{"un-locked"},}, State{"un-locked"}},
     Transition{"push", []State{State{"locked"}, State{"un-locked"},}, State{"locked"}},
   }
-  myFSM = setTransitions(myFSM, myTransitions)
+  myFSM = SetTransitions(myFSM, myTransitions)
 
-  myFSM = transition(myFSM, "coin")
-  myFSM = transition(myFSM, "coin")
+  myFSM = Execute(myFSM, "coin")
+  myFSM = Execute(myFSM, "coin")
 
-  if myFSM.is("locked") == true {
+  if myFSM.Is("locked") == true {
     t.Fail()
   }
 }
 
-
 func TestLifecycle(t *testing.T) {
   // generate a new FSM with an initial state of "locked"
-  myFSM := generate("locked")
+  myFSM := Generate("locked")
 
   // define all possible transitions
   myTransitions := []Transition{
@@ -34,12 +33,12 @@ func TestLifecycle(t *testing.T) {
   }
 
   // add transition rules to FSM
-  myFSM = setTransitions(myFSM, myTransitions)
+  myFSM = SetTransitions(myFSM, myTransitions)
 
   var money int = 0
 
   // add lifecycle Callbacks to FSM
-  myFSM = setCallbacks(myFSM,
+  myFSM = SetCallbacks(myFSM,
     func(transition string) {}, // onBeforeTransition
     func(transition string) { // onAfterTransition
       if transition == "coin" {
@@ -51,10 +50,10 @@ func TestLifecycle(t *testing.T) {
   )
 
   // execute the "coin" transition twice
-  myFSM = transition(myFSM, "coin")
-  myFSM = transition(myFSM, "coin")
+  myFSM = Execute(myFSM, "coin")
+  myFSM = Execute(myFSM, "coin")
 
-  if myFSM.is("locked") == true {
+  if myFSM.Is("locked") == true {
     t.Fail()
   }
 
@@ -65,25 +64,41 @@ func TestLifecycle(t *testing.T) {
 }
 
 func TestHistory(t *testing.T) {
-  myFSM := generate("locked", true)
+  myFSM := Generate("locked", true)
 
   // define all possible transitions
   myTransitions := []Transition{
     Transition{"coin", []State{State{"locked"}, State{"un-locked"},}, State{"un-locked"}},
     Transition{"push", []State{State{"locked"}, State{"un-locked"},}, State{"locked"}},
   }
-  myFSM = setTransitions(myFSM, myTransitions)
+  myFSM = SetTransitions(myFSM, myTransitions)
 
-  myFSM = transition(myFSM, "coin")
-  myFSM = transition(myFSM, "coin")
+  myFSM = Execute(myFSM, "coin")
+  myFSM = Execute(myFSM, "coin")
 
   if len(myFSM.history) != 3 {
     t.Fail()
   }
 
-  myFSM = clearHistory(myFSM)
+  myFSM = ClearHistory(myFSM)
 
   if len(myFSM.history) != 1 {
     t.Fail()
   }
+}
+
+func TestVisualization(t *testing.T) {
+  myFSM := Generate("locked")
+
+  // define all possible transitions
+  myTransitions := []Transition{
+    Transition{"coin", []State{State{"locked"}, State{"un-locked"},}, State{"un-locked"}},
+    Transition{"push", []State{State{"locked"}, State{"un-locked"},}, State{"locked"}},
+  }
+  myFSM = SetTransitions(myFSM, myTransitions)
+
+  myFSM = Execute(myFSM, "coin")
+  myFSM = Execute(myFSM, "coin")
+
+  GenerateVisualization(myFSM, "testVisualization.txt")
 }
