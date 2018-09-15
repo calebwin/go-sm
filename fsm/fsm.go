@@ -32,6 +32,7 @@ type FSM struct {
   onEnterState onEnterStateCallback
   onLeaveState onLeaveStateCallback
   history []string
+  historyPos int
 }
 
 func (fsm *FSM) is(state string) bool {
@@ -107,7 +108,7 @@ func (fsm *FSM) allStates() []string {
 }
 
 func generate(initialState string, flags ...bool) FSM {
-  if len(flags) >= 1 && flags[0] == true { // enable history
+  if len(flags) > 0 && flags[0] == true { // enable history
     return FSM {
       initialState,
       make(map[string]Transition),
@@ -116,6 +117,7 @@ func generate(initialState string, flags ...bool) FSM {
       func (state string) {},
       func (state string) {},
       []string {initialState,},
+      0,
     }
   }
 
@@ -127,6 +129,7 @@ func generate(initialState string, flags ...bool) FSM {
     func (state string) {},
     func (state string) {},
     []string {},
+    0,
   }
 }
 
@@ -137,6 +140,11 @@ func setTransitions(fsm FSM, newTransitions []Transition) FSM {
     newTransitionMap[transition.name] = transition
   }
 
+  newHistory := fsm.history
+  if len(fsm.history) > 0 {
+    newHistory = newHistory[0 : fsm.historyPos + 1]
+  }
+
   return FSM {
     fsm.state,
     newTransitionMap,
@@ -144,20 +152,27 @@ func setTransitions(fsm FSM, newTransitions []Transition) FSM {
     fsm.onAfterTransition,
     fsm.onEnterState,
     fsm.onLeaveState,
-    fsm.history,
+    newHistory,
+    fsm.historyPos,
   }
 }
 
 func setCallbacks(fsm FSM, newOnBeforeTransition onBeforeTransitionCallback, newOnAfterTransition onAfterTransitionCallback, newOnEnterState onEnterStateCallback, newOnLeaveState onLeaveStateCallback) FSM {
-    return FSM {
-      fsm.state,
-      fsm.transitions,
-      newOnBeforeTransition,
-      newOnAfterTransition,
-      newOnEnterState,
-      newOnLeaveState,
-      fsm.history,
-    }
+  newHistory := fsm.history
+  if len(fsm.history) > 0 {
+    newHistory = newHistory[0 : fsm.historyPos + 1]
+  }
+
+  return FSM {
+    fsm.state,
+    fsm.transitions,
+    newOnBeforeTransition,
+    newOnAfterTransition,
+    newOnEnterState,
+    newOnLeaveState,
+    newHistory,
+    fsm.historyPos,
+  }
 }
 
 func transition(fsm FSM, transition string) FSM {
@@ -174,6 +189,10 @@ func transition(fsm FSM, transition string) FSM {
       newHistory = append(newHistory, fsm.transitions[validTransitionNames[0]].to.name)
     }
 
+    if len(fsm.history) > 0 {
+      newHistory = newHistory[0 : fsm.historyPos + 1 + 1]
+    }
+
     return FSM {
       fsm.transitions[validTransitionNames[0]].to.name,
       fsm.transitions,
@@ -182,8 +201,71 @@ func transition(fsm FSM, transition string) FSM {
       fsm.onEnterState,
       fsm.onLeaveState,
       newHistory,
+      fsm.historyPos + 1,
     }
   }
 
   return fsm
+}
+
+
+
+func clearHistory(fsm FSM) FSM  {
+  return FSM {
+    fsm.state,
+    fsm.transitions,
+    fsm.onBeforeTransition,
+    fsm.onAfterTransition,
+    fsm.onEnterState,
+    fsm.onLeaveState,
+    []string {fsm.state},
+    0,
+  }
+}
+
+func historyBack(fsm FSM, numSteps int) FSM  {
+  if fsm.historyPos - numSteps >= 0 {
+    return FSM {
+      fsm.history[fsm.historyPos - numSteps],
+      fsm.transitions,
+      fsm.onBeforeTransition,
+      fsm.onAfterTransition,
+      fsm.onEnterState,
+      fsm.onLeaveState,
+      fsm.history,
+      fsm.historyPos - numSteps,
+    }
+  }
+
+  return fsm
+}
+
+func historyForward(fsm FSM, numSteps int) FSM  {
+  if fsm.historyPos + numSteps <= len(fsm.history) - 1 {
+    return FSM {
+      fsm.history[fsm.historyPos + numSteps],
+      fsm.transitions,
+      fsm.onBeforeTransition,
+      fsm.onAfterTransition,
+      fsm.onEnterState,
+      fsm.onLeaveState,
+      fsm.history,
+      fsm.historyPos + numSteps,
+    }
+  }
+
+  return fsm
+}
+
+func limitHistory(fsm FSM, limit int) FSM  {
+  return FSM {
+    fsm.state,
+    fsm.transitions,
+    fsm.onBeforeTransition,
+    fsm.onAfterTransition,
+    fsm.onEnterState,
+    fsm.onLeaveState,
+    fsm.history[len(fsm.history) - limit : len(fsm.history)],
+    fsm.historyPos,
+  }
 }

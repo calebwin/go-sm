@@ -80,4 +80,10 @@ func TestHistory(t *testing.T) {
   if len(myFSM.history) != 3 {
     t.Fail()
   }
+
+  myFSM = clearHistory(myFSM)
+
+  if len(myFSM.history) != 1 {
+    t.Fail()
+  }
 }
